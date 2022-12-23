@@ -3,19 +3,21 @@
 #include "Pheromone.hpp"
 #include "constants.hpp"
 
-Pheromone::Pheromone(int antIndex) {
+Pheromone::Pheromone(int antIndex, char type) {
     this->pos.x = 0.0f;
     this->pos.y = 0.0f;
     this->antIndex = antIndex;
     this->isLiving = true;
+    this->type = type;
     this->init();
 }
 
-Pheromone::Pheromone(float x, float y, int antIndex) {
+Pheromone::Pheromone(float x, float y, int antIndex, char type) {
     this->pos.x = x;
     this->pos.y = y;
     this->antIndex = antIndex;
     this->isLiving = true;
+    this->type = type;
     this->init();
 }
 
@@ -29,7 +31,12 @@ void Pheromone::draw(sf::RenderWindow &window)
 {
     this->shape.setPosition(this->pos.x, this->pos.y);
     int opacity = 255 - (int)(this->lifetime.getElapsedTime().asSeconds() / PHEROMONE_LIFETIME * 255);
-    this->shape.setFillColor(sf::Color(100, 100, 255, opacity));
+    if (this->type == 'f') {
+        this->shape.setFillColor(sf::Color(100, 255, 100, opacity));
+    } else {
+        this->shape.setFillColor(sf::Color(100, 100, 255, opacity));
+    }
+    
     window.draw(this->shape);
 }
 

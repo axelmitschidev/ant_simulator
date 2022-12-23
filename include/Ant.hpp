@@ -2,10 +2,12 @@
 #define ANT_HPP
 
 #include <SFML/Graphics.hpp>
+#include <string>
 #include <list>
 
 #include "Vector2f.hpp"
 #include "Pheromone.hpp"
+#include "Food.hpp"
 
 class Ant
 {
@@ -13,7 +15,7 @@ class Ant
         Ant(int index);
         Ant(float x, float y, int index);
 
-        void update(std::list<Pheromone> *pheromones);
+        void update(std::list<Pheromone> *pheromones, std::list<Food>* foods);
         void draw(sf::RenderWindow &window);
 
     private:
@@ -22,6 +24,9 @@ class Ant
         sf::RectangleShape shape;
         int index;
         sf::Clock clock;
+        std::string state;
+        sf::Clock stateClock;
+        Food* food;
 
         void init();
 };

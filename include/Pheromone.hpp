@@ -10,9 +10,10 @@ class Pheromone
     public:
         sf::Clock lifetime;
         bool isLiving;
+        char type;
 
-        Pheromone(int antIndex);
-        Pheromone(float x, float y, int antIndex);
+        Pheromone(int antIndex, char type);
+        Pheromone(float x, float y, int antIndex, char type);
 
         void update();
         void draw(sf::RenderWindow &window);
