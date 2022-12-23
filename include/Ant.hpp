@@ -8,6 +8,7 @@
 #include "Vector2f.hpp"
 #include "Pheromone.hpp"
 #include "Food.hpp"
+#include "AntHill.hpp"
 
 class Ant
 {
@@ -15,7 +16,7 @@ class Ant
         Ant(int index);
         Ant(float x, float y, int index);
 
-        void update(std::list<Pheromone> *pheromones, std::list<Food>* foods);
+        void update(std::list<Pheromone> *pheromones, std::list<Food>* foods, AntHill* anthill);
         void draw(sf::RenderWindow &window);
 
     private:

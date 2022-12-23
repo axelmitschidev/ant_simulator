@@ -6,7 +6,6 @@
 
 std::mt19937 generator(time(nullptr));
 std::uniform_real_distribution<double> distributionDirection(-ANT_RAND_DIRECTION, ANT_RAND_DIRECTION);
-std::uniform_real_distribution<double> distributionFrenquency(-PHEROMONE_FREQUENCY/10, PHEROMONE_FREQUENCY/10);
 std::uniform_real_distribution<double> distributionSpawn(0, 360);
 
 Ant::Ant(int index) {
@@ -29,7 +28,7 @@ Ant::Ant(float x, float y, int index) {
     this->init();
 }
 
-void Ant::update(std::list<Pheromone>* pheromones, std::list<Food>* foods)
+void Ant::update(std::list<Pheromone>* pheromones, std::list<Food>* foods, AntHill* anthill)
 {
     if (this->state == "searching")
     {
@@ -37,8 +36,7 @@ void Ant::update(std::list<Pheromone>* pheromones, std::list<Food>* foods)
         for (auto it = pheromones->begin(); it != pheromones->end(); ++it) {
             if (sqrt(pow(it->getPos().x - this->pos.x, 2) + pow(it->getPos().y - this->pos.y, 2)) < ANT_VIEW_RADIUS &&
                 it->getAntIndex() != this->index &&
-                it->type == 'f')
-            {
+                it->type == 'f') {
                 int power = 1 - (int)(it->lifetime.getElapsedTime().asSeconds() / PHEROMONE_LIFETIME);
                 buff.x += (it->getPos().x - this->pos.x) * it->lifetime.getElapsedTime().asSeconds() * power;
                 buff.y += (it->getPos().y - this->pos.y) * it->lifetime.getElapsedTime().asSeconds() * power;
@@ -54,28 +52,34 @@ void Ant::update(std::list<Pheromone>* pheromones, std::list<Food>* foods)
         if (this->pos.x > WINDOW_WIDTH) this->vel.x = -this->vel.x;
         if (this->pos.y > WINDOW_HEIGHT) this->vel.y = -this->vel.y;
 
+        if (sqrt(pow(anthill->pos.x + 100 - this->pos.x, 2) + pow(anthill->pos.y + 100 - this->pos.y, 2)) <= 100) {
+            this->stateClock.restart();
+        }
+
         float newDirection = this->vel.getDirection() + distributionDirection(generator);
         this->vel.setDirection(newDirection);
 
         this->pos.add(this->vel);
 
         sf::Time stateElapsed = this->stateClock.getElapsedTime();
-        if (stateElapsed.asSeconds() <= STATE_PHEROMONE_TIME + distributionFrenquency(generator)) {
+        if (stateElapsed.asSeconds() <= STATE_PHEROMONE_TIME) {
             sf::Time elapsed = this->clock.getElapsedTime();
-            if (elapsed.asSeconds() > PHEROMONE_FREQUENCY)
-            {
+            if (elapsed.asSeconds() > PHEROMONE_FREQUENCY) {
                 pheromones->push_back(Pheromone(this->pos.x, this->pos.y, this->index, 'h'));
                 this->clock.restart();
             }
         }
 
         for (auto it = foods->begin(); it != foods->end(); ++it) {
-            if (sqrt(pow(it->getPos().x - this->pos.x, 2) + pow(it->getPos().y - this->pos.y, 2)) <= 6 && !it->isTransporting)
-            {
+            if (sqrt(pow(it->getPos().x - this->pos.x, 2) + pow(it->getPos().y - this->pos.y, 2)) <= 6 && !it->isTransporting) {
+                
+                this->vel.x = -this->vel.x;
+                this->vel.y = -this->vel.y;
                 this->food = &(*it);
                 this->food->isTransporting = true;
-                this->state = "collecting";
                 this->stateClock.restart();
+                this->state = "collecting";
+                break;
             }
         };
         
@@ -87,8 +91,7 @@ void Ant::update(std::list<Pheromone>* pheromones, std::list<Food>* foods)
         for (auto it = pheromones->begin(); it != pheromones->end(); ++it) {
             if (sqrt(pow(it->getPos().x - this->pos.x, 2) + pow(it->getPos().y - this->pos.y, 2)) < ANT_VIEW_RADIUS &&
                 it->getAntIndex() != this->index &&
-                it->type == 'h')
-            {
+                it->type == 'h') {
                 int power = 1 - (int)(it->lifetime.getElapsedTime().asSeconds() / PHEROMONE_LIFETIME);
                 buff.x += (it->getPos().x - this->pos.x) * it->lifetime.getElapsedTime().asSeconds() * power;
                 buff.y += (it->getPos().y - this->pos.y) * it->lifetime.getElapsedTime().asSeconds() * power;
@@ -109,18 +112,26 @@ void Ant::update(std::list<Pheromone>* pheromones, std::list<Food>* foods)
 
         this->pos.add(this->vel);
         
-        Food* p_food = this->food;
-        p_food->pos.x = this->pos.x - 6;
-        p_food->pos.y = this->pos.y - 6;
+        if (this->food != nullptr) {
+            Food* p_food = this->food;
+            p_food->pos.x = this->pos.x - 6;
+            p_food->pos.y = this->pos.y - 6;
+        }
 
         sf::Time stateElapsed = this->stateClock.getElapsedTime();
-        if (stateElapsed.asSeconds() <= STATE_PHEROMONE_TIME * 2 + distributionFrenquency(generator)) {
+        if (stateElapsed.asSeconds() <= STATE_PHEROMONE_TIME) {
             sf::Time elapsed = this->clock.getElapsedTime();
-            if (elapsed.asSeconds() > PHEROMONE_FREQUENCY)
-            {
+            if (elapsed.asSeconds() > PHEROMONE_FREQUENCY) {
                 pheromones->push_back(Pheromone(this->pos.x, this->pos.y, this->index, 'f'));
                 this->clock.restart();
             }
+        }
+        if (sqrt(pow(this->pos.x - (anthill->pos.x) - 100, 2) + pow(this->pos.y - (anthill->pos.y) - 100, 2)) <= 100) {
+            this->vel.x = -this->vel.x;
+            this->vel.y = -this->vel.y;
+            this->stateClock.restart();
+            this->food = nullptr;
+            this->state = "searching";
         }
     }
     
